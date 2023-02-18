@@ -1,34 +1,46 @@
 require("dotenv").config()
 const express =  require('express')
-const path = require("path")
-const verifyJWT = require("./middewares/verifyJWT");
-const cookie = require('cookie-parser')
-const credentials = require('./middewares/credentials')
-const cors = require("cors");
-const corsOPtion = require("./config/corsOPtion")
-const db = require("./models");
-const { json } = require('sequelize');
-const PORT = process.env.PORT || 5000;
 const app = express();
 
+const path = require("path")
+const cors = require("cors");
+const corsOPtion = require("./config/corsOPtion")
+
+const verifyJWT = require("./middewares/verifyJWT");
+const cookieParser = require('cookie-parser')
+const credentials = require('./middewares/credentials')
+
+
+const mongoose = require('mongoose')
+const connectDb = require('./config/dbConfig')
+const PORT = process.env.PORT || 5000;
+
+
+//connect to database
+connectDb();
 
 //middlewares
 
 app.use(credentials) //for header-authorization 
 app.use(cors(corsOPtion)) //Cross Origin Resource Sharing
-app.use(express.json()); //built-in middleware to handle json data
-app.use(express.urlencoded({ extended: true })) //built-in middleware to handle url-encoded data(form data)
-app.use(express.static(path.join(__dirname, "/public"))); //serve static file
+//app.use(bodyParser.urlencoded({ extended: false }))
+app.use(express.urlencoded({ extended: false })) //built-in middleware to handle url-encoded data(form data)
+app.use(express.json());//built-in middleware to handle json data
+
 
 //third-party middleware
-app.use(cookie())
+app.use(cookieParser())
+
+app.use(express.static(path.join(__dirname, "/public"))); //serve static file
+
+
 
 //Routes
 app.use('/', require('./routes/pages'));
 app.use('/auth', require('./routes/auth'));
 
-app.use(verifyJWT);
-app.use('/projects', require('./routes/projects'));
+// app.use(verifyJWT);
+app.use('/projects', verifyJWT, require('./routes/projects'));
 
 //if route requested doesn't exist
 app.all("*", (req, res) =>{
@@ -49,12 +61,9 @@ app.use(function(err, req, res, next){
   res.status(500).send(err.message);
 })
 
-// connect to database:
-db.sequelize.sync({force: false}).then(()=>{
-  app.listen(PORT, ()=> {
-    console.log('app is running on port 5000');
-  });
-});
 
-
+mongoose.connection.once('open', () => {
+  console.log('connected to mongodb');
+  app.listen(PORT, ()=> console.log('app is running on port 5000'));
+})
 

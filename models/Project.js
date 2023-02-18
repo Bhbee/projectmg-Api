@@ -1,28 +1,42 @@
-module.exports = (sequelize, DataTypes) => {
-    const project = sequelize.define("Projects",{
-        id:{
-            type:DataTypes.INTEGER,
-            autoIncrement: true,
-            primaryKey: true
-        },
-        projectTitle:{
-            type: DataTypes.STRING,
-            allowNull: false,
-            len: [10, 30]
+const mongoose = require('mongoose')
+const projectSchema = new mongoose.Schema({
+    title:{
+        unique: true,
+        required: true,
+        type:String,
+        len: [10, 30]
+    },
+    description:{
+        required: true,
+        type:String,
+    },
+    creator:{
+        required: true,
+        type:String,
+    },
+    participants:[String],
+    admins:[String],
+    tasks: [{
+        title:{
+            unique: true,
+            required: true,
+            type:String,
         },
         description:{
-            type: DataTypes.TEXT,
-            allowNull: false
+            required: true,
+            type:String,
         },
-        creator:{
-            type: DataTypes.STRING,
-            allowNull: false
+        assignedTo:{
+            type: String
         },
-        superAdmin:{
-            type: DataTypes.BOOLEAN,
-            allowNull: true
+        isComplete:{
+            required:true,
+            type: Boolean,
+            default: false
         }
+    }]
+},
+{timestamps: true} 
+);
         
-    });
-    return project;
-};
+module.exports = mongoose.model('Project', projectSchema)
